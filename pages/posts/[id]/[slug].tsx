@@ -2,25 +2,51 @@ import { Post, PostService } from "danielbonifacio-sdk";
 import { GetServerSideProps } from "next";
 import { ParsedUrlQuery } from "querystring";
 import { ResourceNotFoundError } from "danielbonifacio-sdk/dist/errors";
+import Head from "next/head";
+import PostHeader from "../../../components/PostHeader";
+import Markdown from "../../../components/Markdown";
 
 interface PostProps extends NextPageProps {
   post?: Post.Detailed;
+  host?: string;
 }
 
 export default function PostPage(props: PostProps) {
-  return <div>{props.post?.title}</div>;
+  const { post } = props;
+  return (
+    <>
+      <Head>
+        <link
+          rel="canonical"
+          href={`http://${props.host}/${props.post?.id}/${props.post?.slug}`}
+        />
+      </Head>
+      {post && (
+        <>
+          <PostHeader
+            thumbnail={post?.imageUrls.large}
+            createdAt={post?.createdAt}
+            editor={post?.editor}
+            title={post?.title}
+          />
+          <Markdown>{post.body}</Markdown>
+        </>
+      )}
+    </>
+  );
 }
 
 interface Params extends ParsedUrlQuery {
-  pid: string[];
+  id: string;
+  slug: string;
 }
 
 export const getServerSideProps: GetServerSideProps<PostProps, Params> =
-  async ({ params }) => {
+  async ({ params, res, req }) => {
     try {
       if (!params) return { notFound: true };
 
-      const [id, slug] = params.pid;
+      const { id, slug } = params;
       const postId = Number(id);
 
       if (isNaN(postId)) return { notFound: true };
@@ -30,6 +56,7 @@ export const getServerSideProps: GetServerSideProps<PostProps, Params> =
       return {
         props: {
           post,
+          host: req.headers.host,
         },
       };
     } catch (error) {
