@@ -32,6 +32,7 @@ export default function Home(props: HomeProps) {
       </PostsGrid>
 
       <ReactPaginate
+        containerClassName={"Pagination"}
         pageCount={posts?.totalPages || 0}
         marginPagesDisplayed={0}
         pageRangeDisplayed={3}
@@ -58,7 +59,7 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async ({
 }) => {
   const { page: _page } = query;
 
-  const page = Number(_page);
+  const page = _page ? Number(_page) : 1;
 
   if (isNaN(page) || page < 1) {
     return sendToHomePage(res);
