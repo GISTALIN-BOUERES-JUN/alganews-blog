@@ -1,6 +1,7 @@
 import { Post, PostService } from "danielbonifacio-sdk";
 import { GetServerSideProps } from "next";
 import { ParsedUrlQuery } from "querystring";
+import { ResourceNotFoundError } from "danielbonifacio-sdk/dist/errors";
 
 interface PostProps extends NextPageProps {
   post?: Post.Detailed;
@@ -11,7 +12,7 @@ export default function PostPage(props: PostProps) {
 }
 
 interface Params extends ParsedUrlQuery {
-  id: string;
+  pid: string[];
 }
 
 export const getServerSideProps: GetServerSideProps<PostProps, Params> =
@@ -19,7 +20,7 @@ export const getServerSideProps: GetServerSideProps<PostProps, Params> =
     try {
       if (!params) return { notFound: true };
 
-      const { id } = params;
+      const [id, slug] = params.pid;
       const postId = Number(id);
 
       if (isNaN(postId)) return { notFound: true };
@@ -32,7 +33,9 @@ export const getServerSideProps: GetServerSideProps<PostProps, Params> =
         },
       };
     } catch (error) {
-      console.log(error);
+      if (error instanceof ResourceNotFoundError) {
+        return { notFound: true };
+      }
       return {
         props: {
           error: {
